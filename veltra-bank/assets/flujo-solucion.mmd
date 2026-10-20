@@ -1,0 +1,37 @@
+sequenceDiagram
+    accTitle: Flujo de la solución de Veltra Bank
+    accDescr: Dos visitas de Gastón a la réplica permiten capturar credenciales y el OTP en claro mediante JavaScript modificado. Usamos el código dentro de su vigencia en nuestra pestaña del banco.
+    participant G as Gastón<br/>(su navegador)
+    participant R as Réplica pública<br/>(nuestro servidor)
+    participant A as Nosotros<br/>(equipo local)
+    participant B as Veltra Bank<br/>(servidor real)
+
+    rect rgb(239, 245, 255)
+        Note over G,B: 1. Primera visita: obtenemos las credenciales
+        G->>R: Envía usuario y contraseña
+        R-->>A: Credenciales en los logs
+        A->>B: Iniciamos sesión con esas credenciales
+        B-->>A: Solicita el segundo factor
+        Note over A,B: Dejamos el banco abierto<br/>en la verificación 2FA.
+    end
+
+    rect rgb(237, 249, 245)
+        Note over G,B: 2. Nueva visita: capturamos directamente el OTP
+        G->>R: Nueva visita y login
+        R-->>G: Formulario del OTP
+        Note over G,R: El JavaScript modificado envía<br/>el código ingresado en claro.
+        G->>R: POST /api/verificar<br/>con {codigo: "429989"}
+        R-->>A: OTP en los logs: 429989
+    end
+
+    rect rgb(255, 247, 233)
+        Note over G,B: 3. Completamos el acceso en la pestaña del banco
+        Note over A,B: Escribimos el OTP capturado<br/>antes de que venza.<br/>Nuestro navegador envía:
+        A->>B: GET /api/challenge
+        B-->>A: Nonce del banco: nonce_B
+        A->>B: POST /api/verificar con el hash<br/>SHA-256(nonce_B + ":" + OTP)
+        B-->>A: ok:true, next:/dashboard
+        A->>B: GET /dashboard
+        B-->>A: Dashboard y flag
+        Note over A,B: El JavaScript original del banco<br/>calcula el hash con su nonce<br/>y el OTP capturado.
+    end
