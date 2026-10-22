@@ -6,11 +6,11 @@ Soluciones de los laboratorios de HackLab 2026 elaboradas por **ensalada**, equi
 
 | Lab | HTML | MD | PDF | Hecho |
 | --- | --- | --- | --- | :---: |
-| [Secreto en el LLM](secreto-en-el-llm/) | - | - | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.733kq3gkr9wd) | ❌ |
-| [Balrog](balrog/) | - | - | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.w58jrumoq77x) | ❌ |
-| [Revisor de Videos](revisor-de-videos/) | - | - | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.hhzcmkmbqt0q) | ❌ |
-| [Encuentro Obligado](encuentro-obligado/) | - | - | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.79oq9yklpfv8) | ❌ |
-| [Vulpasar](vulpasar/) | - | - | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.2dtd7h7h25cy) | ❌ |
+| [Secreto en el LLM](secreto-en-el-llm/) | - | [MD](secreto-en-el-llm/README.md) | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.733kq3gkr9wd) | ❌ |
+| [Balrog](balrog/) | - | [MD](balrog/README.md) | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.w58jrumoq77x) | ❌ |
+| [Revisor de Videos](revisor-de-videos/) | - | [MD](revisor-de-videos/README.md) | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.hhzcmkmbqt0q) | ❌ |
+| [Encuentro Obligado](encuentro-obligado/) | - | [MD](encuentro-obligado/README.md) | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.79oq9yklpfv8) | ❌ |
+| [Vulpasar](vulpasar/) | - | [MD](vulpasar/README.md) | [Google Docs](https://docs.google.com/document/d/1YMbGpX4A5Fo3RleArSosdN7WrpmEFeZJlNoqDMRnxug/edit?tab=t.2dtd7h7h25cy) | ❌ |
 | [ArteStudio](arte-studio/) | - | [MD](arte-studio/README.md) | - | ❌ |
 | [Veltra Bank](veltra-bank/) | - | [MD](veltra-bank/README.md) | - | ✅ |
 
