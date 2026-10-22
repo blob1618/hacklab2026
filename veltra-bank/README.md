@@ -10,11 +10,11 @@ La solución captura las credenciales y el OTP mediante una réplica del portal 
 
 El desafío pide iniciar sesión como Gastón Díaz. La plataforma permite indicar el dominio del desafío —con protocolo y sin ruta— y una URL completa para que el cliente la visite. La visita solo puede solicitarse una vez por minuto, no admite direcciones locales o internas y no debe atacarse. El enunciado ya habla de un sitio falso y advierte que, si Gastón ve algo sospechoso, cierra la página.
 
-Al abrir la instancia, la página inicial es el login de VeltraBank, con los campos Usuario y Contraseña y el botón Continuar.
+Al abrir la instancia, la página inicial es el login de VeltraBank, con los campos Usuario y Contraseña y el botón Continuar (Figura 1).
 
 ![Login de VeltraBank en la instancia](assets/public-01-login.png)
 
-*Login inicial de VeltraBank, con los campos de usuario y contraseña.*
+*Figura 1. Login inicial de VeltraBank, con los campos de usuario y contraseña.*
 
 Esa pantalla, junto con la posibilidad de enviar a Gastón a una URL y la advertencia de que cierra una página sospechosa, nos lleva a la hipótesis de reproducir el portal para comprobar si introduce allí sus credenciales. El propio enunciado plantea el sitio falso; queda por comprobar si una página equivalente al banco basta.
 
@@ -26,7 +26,7 @@ Creamos `~/veltra-replica` y descargamos el login con GNU Wget desde la terminal
 mkdir -p ~/veltra-replica
 cd ~/veltra-replica
 BANCO="https://DOMINIO_DE_LA_INSTANCIA"
-wget --page-requisites --convert-links --adjust-extension \
+wget -e robots=off --page-requisites --convert-links --adjust-extension \
      --no-host-directories "$BANCO/login"
 ```
 
@@ -59,11 +59,11 @@ Al iniciar imprime:
 Servidor de login en http://127.0.0.1:8001/
 ```
 
-La terminal A queda abierta: allí aparecen las solicitudes y los datos del formulario.
+La terminal A queda abierta: allí aparecen las solicitudes y los datos del formulario. La copia del login se sirve en `127.0.0.1:8001` (Figura 2).
 
 ![Copia del login servida en 127.0.0.1:8001](assets/public-servidor-login.png)
 
-*La copia se sirve en `127.0.0.1:8001`; la captura muestra una prueba con datos ficticios.*
+*Figura 2. La copia se sirve en `127.0.0.1:8001`; la captura muestra una prueba con datos ficticios.*
 
 Los archivos de esta etapa son:
 
@@ -86,23 +86,23 @@ ssh -R 80:127.0.0.1:8001 nokey@localhost.run
 
 SSH mantiene el túnel y localhost.run anuncia una URL pública HTTPS. Esa URL es necesaria porque el cliente del desafío no puede entrar a `127.0.0.1`. La terminal A sigue con el servidor; la terminal B queda abierta con el túnel. Ambas deben permanecer abiertas.
 
-En nuestra primera visita, localhost.run anuncia:
+En nuestra primera visita, localhost.run anuncia la URL pública HTTPS (Figura 3):
 
 ```text
 14d8e54d7808a4.lhr.life tunneled with tls termination, https://14d8e54d7808a4.lhr.life
 ```
 
-La URL que se copia al formulario es la URL completa que comienza por `https://`. El parámetro `?probe=...` que aparece en la captura es un marcador opcional para reconocer la visita en los logs; no es necesario para el ataque. La URL cambia si se abre un túnel nuevo; hay que usar la que anuncie la terminal B en cada ejecución. La documentación del servicio está en [localhost.run/docs](https://localhost.run/docs/).
+La URL que se copia al formulario es la URL completa que comienza por `https://`. La URL cambia si se abre un túnel nuevo; hay que usar la que anuncie la terminal B en cada ejecución. La documentación del servicio está en [localhost.run/docs](https://localhost.run/docs/).
 
 ![Salida de localhost.run con la URL de la primera visita](assets/public-tunel.png)
 
-*Línea de localhost.run con la URL HTTPS de la primera visita.*
+*Figura 3. Línea de localhost.run con la URL HTTPS de la primera visita.*
 
-En el formulario del desafío escribimos el dominio de la instancia con protocolo y sin ruta, pegamos la URL HTTPS completa y pulsamos **Hacer que el cliente visite la URL**. El mensaje «El cliente de Veltra Bank está por iniciar sesión» confirma que la visita está en marcha.
+En el formulario del desafío escribimos el dominio de la instancia con protocolo y sin ruta, pegamos la URL HTTPS completa y pulsamos **Hacer que el cliente visite la URL**. El parámetro `?probe=...` que aparece en esa URL es un marcador opcional para reconocer la visita en los logs; no es necesario para el ataque. El mensaje «El cliente de Veltra Bank está por iniciar sesión» confirma que la visita está en marcha (Figura 4).
 
 ![Formulario del desafío con la URL de la réplica](assets/public-02-visita.png)
 
-*Formulario del desafío con el dominio del banco y la URL de la réplica; abajo, el mensaje de inicio de la visita.*
+*Figura 4. Formulario del desafío con el dominio del banco y la URL de la réplica; abajo, el mensaje de inicio de la visita.*
 
 Volvemos a la terminal A, donde el servidor registra la visita y el envío del formulario:
 
@@ -124,11 +124,11 @@ Abrimos el login de la instancia en una pestaña y enviamos las credenciales cap
 
 La respuesta es JSON; el JavaScript lee `next` y carga `/verificar`. Dejamos esa pestaña abierta, esperando completar la verificación.
 
-La pantalla muestra el paso 2 de 2, el saludo a `gaston.diaz` y el campo para el código de seis dígitos.
+La pantalla muestra el paso 2 de 2, el saludo a `gaston.diaz` y el campo para el código de seis dígitos (Figura 5).
 
 ![Pantalla de verificación en dos pasos de la instancia bancaria](assets/public-04-paso-2.png)
 
-*Pantalla de verificación en dos pasos de la instancia bancaria.*
+*Figura 5. Pantalla de verificación en dos pasos de la instancia bancaria.*
 
 El segundo factor es un OTP de seis cifras. Antes de descargar y adaptar `/verificar`, analizamos el manejador 2FA de `veltra.js`.
 
@@ -192,11 +192,11 @@ Al iniciar imprime:
 Servidor completo en http://127.0.0.1:8001/
 ```
 
-En esta etapa el servidor no imprime las credenciales del login; registra el OTP recibido. Después devuelve un rechazo simulado: su función es capturar el código. El túnel de la terminal B sigue apuntando al puerto `8001`.
+En esta etapa el servidor no imprime las credenciales del login; registra el OTP recibido. Después devuelve un rechazo simulado: su función es capturar el código. El túnel de la terminal B sigue apuntando al puerto `8001`. La versión completa sirve la página `/verificar` en el mismo puerto (Figura 6).
 
 ![Página de verificación servida en 127.0.0.1:8001](assets/public-servidor-verificar.png)
 
-*La versión completa sirve `/verificar` en `127.0.0.1:8001`.*
+*Figura 6. La versión completa sirve `/verificar` en `127.0.0.1:8001`.*
 
 Solicitamos una nueva visita con la URL pública vigente. Gastón Díaz vuelve a entrar por la raíz de la réplica, completa el login y llega al formulario del OTP. La pestaña del banco sigue abierta, esperando la verificación.
 
@@ -219,11 +219,11 @@ Volvemos a la pestaña del banco, escribimos `429989` y pulsamos **Confirmar e i
 
 Al pulsar el botón, el JavaScript original del banco solicita un challenge a la instancia, calcula `SHA-256(nonce + ":" + codigo)` con ese OTP y envía la respuesta a `/api/verificar`. El banco acepta el código capturado.
 
-El navegador carga `/dashboard` siguiendo `next`. La página identifica a `gaston.diaz`, muestra «Sesión verificada» y presenta la flag:
+El navegador carga `/dashboard` siguiendo `next`. La página identifica a `gaston.diaz`, muestra «Sesión verificada» y presenta la flag (Figura 7):
 
 ![Dashboard autenticado de Gastón Díaz con la flag](assets/public-06-dashboard.png)
 
-*Dashboard autenticado de Gastón Díaz con la flag.*
+*Figura 7. Dashboard autenticado de Gastón Díaz con la flag.*
 
 **Flag:** `e769a8f5702bc47d98732409d2794756`
 
@@ -233,9 +233,11 @@ La respuesta del verificador de la instancia y el dashboard autenticado confirma
 
 La réplica permite que Gastón llegue a un login controlado y entregue sus credenciales. En una nueva visita, también introduce el OTP. Al modificar el JavaScript servido por nuestra copia, recibimos directamente el código en los logs.
 
-Con el OTP capturado, volvemos a la pestaña del banco que sigue abierta y completamos la verificación dentro de su vigencia. El cálculo del hash en el navegador no impide la captura: la réplica controla el código que lee el formulario. El dashboard confirma el acceso como `gaston.diaz` y muestra la flag.
+Con el OTP capturado, volvemos a la pestaña del banco que sigue abierta y completamos la verificación dentro de su vigencia. El cálculo del hash en el navegador no impide la captura: la réplica controla el código que lee el formulario. El dashboard confirma el acceso como `gaston.diaz` y muestra la flag. La Figura 8 resume las dos visitas a la réplica y la verificación final en el banco.
 
 ![Flujo de las dos visitas a la réplica, la captura directa del OTP y la verificación final desde nuestro navegador en el banco](assets/flujo-solucion.svg)
+
+*Figura 8. Dos visitas a la réplica, captura del OTP y verificación final desde nuestro navegador en el banco.*
 
 ## 9. Remediación
 
