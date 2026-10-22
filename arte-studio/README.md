@@ -4,12 +4,6 @@
 **Integrantes:** Ezequiel Maldonado, Philippe Maurel Garcete y Franco Sanchez  
 **Desafío:** ArteStudio · **Categoría:** Web
 
-## Vulnerabilidades principales
-
-- **Broken Access Control:** desde la sesión autenticada de una cuenta, **/password/inicio** devuelve el hash asociado al email enviado, aunque pertenezca a otra cuenta.
-- **Hashing débil de contraseñas:** el portal usa SHA-256 directo, sin sal, por lo que permite probar contraseñas fuera de línea.
-- **MFA bypass por aceptación cruzada de TOTP:** un código generado para una cuenta propia se acepta en el desafío de segundo factor de otra cuenta.
-
 # 01 / objetivo, acceso y reconocimiento
 
 ## El archivo del desafío
