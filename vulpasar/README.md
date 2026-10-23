@@ -21,7 +21,11 @@ Encontrá ese archivo.
 
 ### Preparación local
 
-Necesitamos espacio para conservar el .ova y extraer el VMDK: cada archivo ocupa alrededor de 6,2 GiB.
+Necesitamos espacio para conservar el .ova y extraer el VMDK: cada archivo ocupa alrededor de 6,2 GiB. Trabajamos sobre una copia y mantenemos el disco en modo de solo lectura.
+
+Para seguir el análisis necesitamos poder comprobar la integridad de la descarga, abrir el contenedor OVA, acceder al VMDK sin modificarlo, identificar la partición y el sistema de archivos, enumerar nombres e inodos, consultar el índice del ZIP y leer el journal y los bloques de ext4. Esta guía muestra una forma de hacerlo en Linux con `sha256sum`, `tar`, `qemu-nbd`, herramientas de Sleuth Kit, `unzip` y los scripts incluidos. Las herramientas concretas son ejemplos: se pueden usar otras que cumplan esas mismas funciones y permitan contrastar los mismos resultados.
+
+Si se elige otro método para acceder al disco, hay que adaptar los desplazamientos de los comandos. Aquí la partición empieza en el sector 4096 y cada sector mide 512 bytes; una herramienta que pida el desplazamiento en bytes necesitará la conversión correspondiente.
 
 ## 02 / reconocimiento del artefacto
 
@@ -129,11 +133,11 @@ sudo icat -o 4096 "$IMG" 1229078 > archivo.zip
 unzip -l archivo.zip
 ```
 
-unzip muestra fundamental/ev y su tamaño de 33 bytes (Figura 7). Encontramos el objetivo! Solo nos falta listar su contenido.
+unzip muestra fundamental/ev y su tamaño de 33 bytes (Figura 6). Encontramos el objetivo! Solo nos falta listar su contenido.
 
-![Índice del ZIP con la entrada fundamental/ev de 33 bytes.](capturas/figura-07.png)
+![Índice del ZIP con la entrada fundamental/ev de 33 bytes.](capturas/figura-06.png)
 
-*Figura 7. Índice del ZIP con la entrada fundamental/ev de 33 bytes.*
+*Figura 6. Índice del ZIP con la entrada fundamental/ev de 33 bytes.*
 
 ## 04 / una pista que no abre el archivo
 
@@ -156,11 +160,11 @@ La entrada fundamental/ es sólo el directorio. Para probar si unzip puede leer 
 unzip -t archivo.zip
 ```
 
-La salida indica que fundamental/ev se omite porque requiere compatibilidad PK 5.1 (Figura 8). unzip -t termina con código 81; el mensaje "No errors detected" se refiere solo a fundamental/, la única entrada probada.
+La salida indica que fundamental/ev se omite porque requiere compatibilidad PK 5.1 (Figura 7). unzip -t termina con código 81; el mensaje "No errors detected" se refiere solo a fundamental/, la única entrada probada.
 
-![Prueba con unzip que omite fundamental/ev por requerir compatibilidad PK 5.1.](capturas/figura-08.png)
+![Prueba con unzip que omite fundamental/ev por requerir compatibilidad PK 5.1.](capturas/figura-07.png)
 
-*Figura 8. Prueba con unzip que omite fundamental/ev por requerir compatibilidad PK 5.1.*
+*Figura 7. Prueba con unzip que omite fundamental/ev por requerir compatibilidad PK 5.1.*
 
 La búsqueda por nombres no mostró ev, pero el índice del ZIP conserva la ruta fundamental/ev. Esto nos da una pista para revisar el disco: el archivo pudo existir fuera del ZIP y haber sido borrado. Examinamos el journal de ext4, donde pueden quedar versiones anteriores de metadatos.
 
@@ -188,13 +192,13 @@ sudo icat -o 4096 "$IMG" 8 > /tmp/vulpasar-journal.bin
 strings -a -t d -n 2 /tmp/vulpasar-journal.bin | rg ' (fundamental|ev)$' | awk '{print int($1/4096), $2}'
 ```
 
-![Búsqueda en el journal que encuentra referencias a fundamental y ev.](capturas/figura-09.png)
+![Búsqueda en el journal que encuentra referencias a fundamental y ev.](capturas/figura-08.png)
 
-*Figura 9. Búsqueda en el journal que encuentra referencias a fundamental y ev.*
+*Figura 8. Búsqueda en el journal que encuentra referencias a fundamental y ev.*
 
-strings imprime primero la posición en bytes de cada coincidencia. Al dividirla por los 4096 bytes de cada bloque, aparecen bloques candidatos para fundamental y ev (Figura 9). ahora leemos esos bloques con jcat para comprobar las entradas de directorio:
+`strings` informa la posición en bytes de cada coincidencia; `awk` la divide por el tamaño de bloque (4096 bytes) y obtiene los bloques candidatos. Que en ellos aparezcan `fundamental` y `ev` no demuestra por sí solo que formen la misma ruta. Para elegir un par, leemos sus entradas de directorio: `.` identifica el directorio actual, `..` identifica su padre, y el inode asignado a `fundamental` en el primer bloque debe ser el del directorio que contiene `ev` en el segundo. Los bloques `13563` y `13447` cumplen ese criterio; son un ejemplo válido, no las únicas posiciones posibles.
 
-El código de esta inspección está en [scripts/leer_entradas_journal.py](scripts/leer_entradas_journal.py):
+Para mostrar la comprobación de ese par usamos [scripts/leer_entradas_journal.py](scripts/leer_entradas_journal.py), que lee esas dos posiciones de esta imagen:
 
 ```bash
 sudo python3 scripts/leer_entradas_journal.py "$IMG"
@@ -241,13 +245,13 @@ sudo python3 scripts/buscar_inodos_journal.py "$IMG"
 El script devuelve tres entradas:
 
 - 13441 y 13566 tienen UID 1001, tamaño 33 bytes, fecha 2026-10-10T06:25:44+00:00 y apuntan al bloque de datos 2713217
-- 13601 tiene UID 1001, tamaño 33 bytes, fecha 2026-10-10T06:29:04+00:00 y apunta al bloque 2713224 (Figura 10).
+- 13601 tiene UID 1001, tamaño 33 bytes, fecha 2026-10-10T06:29:04+00:00 y apunta al bloque 2713224 (Figura 9).
 
 Así obtenemos dos bloques de datos distintos para comparar. El tamaño coincide con fundamental/ev en el ZIP, pero todavía no comprobamos su contenido. El formato del inode y de sus extents está documentado por el kernel de Linux: https://www.kernel.org/doc/html/latest/filesystems/ext4/inodes.html
 
-![Versiones históricas del inodo 1229077 que apuntan a dos bloques de datos.](capturas/figura-10.png)
+![Versiones históricas del inodo 1229077 que apuntan a dos bloques de datos.](capturas/figura-09.png)
 
-*Figura 10. Versiones históricas del inodo 1229077 que apuntan a dos bloques de datos.*
+*Figura 9. Versiones históricas del inodo 1229077 que apuntan a dos bloques de datos.*
 
 Los extents nos dan dos lugares concretos que podemos comparar. Leemos sólo los primeros 33 bytes de cada bloque y comprobamos longitud, formato e igualdad sin imprimir el valor. Este ejemplo reproduce esa verificación en memoria:
 
@@ -257,11 +261,11 @@ La comparación se ejecuta con [scripts/comparar_bloques.py](scripts/comparar_bl
 sudo python3 scripts/comparar_bloques.py "$IMG"
 ```
 
-Las dos lecturas coinciden: 33 bytes, compuestos por 32 caracteres hexadecimales y un salto de línea (Figura 11). Este es un candidato fuerte para ev.
+Las dos lecturas coinciden: 33 bytes, compuestos por 32 caracteres hexadecimales y un salto de línea (Figura 10). Este es un candidato fuerte para ev.
 
-![Comparación de los bloques recuperados: misma longitud, formato y contenido.](capturas/figura-11.png)
+![Comparación de los bloques recuperados: misma longitud, formato y contenido.](capturas/figura-10.png)
 
-*Figura 11. Comparación de los bloques recuperados: misma longitud, formato y contenido.*
+*Figura 10. Comparación de los bloques recuperados: misma longitud, formato y contenido.*
 
 ## 06 / recuperación de ev
 
@@ -272,6 +276,14 @@ sudo blkcat -o 4096 "$IMG" 2713217 | head -c 33
 ```
 
 blkcat imprime el bloque de datos y head -c 33 conserva los primeros 33 bytes. Obtenemos 660b416167e7fd839bc06c61bb5a184b seguida de un salto de línea. Esta es la flag !
+
+Si usamos `qemu-nbd` para acceder al VMDK, al terminar desconectamos el dispositivo:
+
+```bash
+sudo qemu-nbd --disconnect /dev/nbd0
+```
+
+Como comprobación adicional, probamos las 35 combinaciones entre los siete bloques candidatos para `fundamental` y los cinco para `ev`; diez reconstruyen una ruta coherente. Una versión del inode `1229076` conservada en el journal apunta a un ZIP sin cifrar que contiene la misma flag en `fundamental/ev`; es distinto del `archivo.zip` cuya entrada no pudimos abrir.
 
 ## 07 / síntesis
 

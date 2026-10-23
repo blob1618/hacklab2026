@@ -32,6 +32,8 @@ wget -e robots=off --page-requisites --convert-links --adjust-extension \
 
 `--page-requisites` descarga los recursos referenciados por la página; `--convert-links` adapta los enlaces a las copias locales y `--adjust-extension` guarda el HTML como [`login.html`](replica/login.html). Con `--no-host-directories`, los recursos del banco quedan en `static/`, sin una carpeta adicional con el nombre del dominio. Las fuentes de Google siguen cargándose desde sus URLs originales.
 
+Wget trae el HTML y los recursos del banco; no crea los servidores Python escritos para esta solución. Esos archivos de apoyo se encuentran en [`replica/`](replica/) y deben colocarse en la carpeta de trabajo antes de ejecutar cada versión del servidor.
+
 Para saber qué solicitud debe atender nuestro servidor, miramos el JavaScript de la página. En [`veltra.js`](replica/static/veltra.js), el primer formulario envía:
 
 ```javascript

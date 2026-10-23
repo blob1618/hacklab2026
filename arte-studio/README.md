@@ -4,37 +4,45 @@
 **Integrantes:** Ezequiel Maldonado, Philippe Maurel Garcete y Franco Sanchez  
 **Desafío:** ArteStudio · **Categoría:** Web
 
-# 01 / objetivo, acceso y reconocimiento
+## 01 / objetivo, acceso y reconocimiento
 
-## El archivo del desafío
+### El archivo del desafío
 
-ArteStudio es un portal para artistas. El desafío pide obtener acceso que permita publicar en Música el archivo **cancion.mp3**; la cuenta con la que empezamos no pertenece al grupo privilegiado.
+ArteStudio es un portal para artistas. El desafío pide obtener acceso que permita publicar en Música el archivo **cancion.mp3** (Figura 1); la cuenta con la que empezamos no pertenece al grupo privilegiado.
 
 ![Enunciado de ArteStudio y archivo requerido](capturas/00-enunciado-arte-studio.png)
 
+*Figura 1. Enunciado de ArteStudio y archivo requerido para el desafío.*
+
 El MP3 dura unos 20 segundos y sus metadatos identifican a GISSIC TEAM. Lo escuchamos y revisamos con **file**, **ExifTool** y **ffprobe**. Esa inspección rápida no aporta una pista para evitar la restricción.
 
-## Crear una cuenta propia
+### Crear una cuenta propia
 
 Desde **Registrarse** completamos el nombre artístico, el usuario, un email y una contraseña. El email debe permitirnos recibir y abrir el enlace de verificación; puede ser temporal si admite ese mensaje. Después verificamos la cuenta e iniciamos sesión.
 
 En esta resolución, la cuenta propia se llama Fran (**@fran**); de aquí en adelante la llamaremos **cuenta de prueba**.
 
-Desde la navegación del portal abrimos Música. La cuenta de prueba puede ver las obras, pero recibe el aviso **“Carga restringida”** al intentar publicar.
+Desde la navegación del portal abrimos Música. La cuenta de prueba puede ver las obras, pero recibe el aviso **“Carga restringida”** al intentar publicar (Figura 2).
 
 ![Música muestra el aviso de carga restringida y las obras visibles para la cuenta de prueba](capturas/02-musica-restringida.png)
 
-Volvemos a **Mi estudio** y abrimos **Configuración**. La tarjeta de la cuenta muestra el enlace a ese panel.
+*Figura 2. Música muestra el aviso de carga restringida para la cuenta de prueba.*
+
+Volvemos a **Mi estudio** y abrimos **Configuración**. La tarjeta de la cuenta muestra el enlace a ese panel (Figura 3).
 
 ![Mi estudio muestra la cuenta de prueba y el enlace Configuración](capturas/01a-estudio-configuracion.png)
 
-# 02 / explorar Configuración
+*Figura 3. Mi estudio muestra la cuenta de prueba y el enlace Configuración.*
 
-## Revisar el formulario de contraseña
+## 02 / explorar Configuración
 
-En **Configuración** revisamos el formulario de cambio de contraseña. El campo de email es editable; ese detalle será relevante al observar qué cuenta consulta la solicitud.
+### Revisar el formulario de contraseña
+
+En **Configuración** revisamos el formulario de cambio de contraseña. El campo de email es editable (Figura 4); ese detalle será relevante al observar qué cuenta consulta la solicitud.
 
 ![Formulario de cambio de contraseña con el campo de email editable](capturas/01b-formulario-password.png)
+
+*Figura 4. Formulario de cambio de contraseña con el campo de email editable.*
 
 Con Burp observamos que la página carga **GET /static/password.js**. Estos fragmentos de los comentarios iniciales explican para qué se consulta el hash y aclaran que se envía el email escrito en el formulario:
 
@@ -59,7 +67,7 @@ if (await sha256Hex(nueva) === hashActual) {
 }
 ~~~
 
-## Probar el flujo con la cuenta propia
+### Probar el flujo con la cuenta propia
 
 Con Burp observando las solicitudes, completamos el formulario con una contraseña nueva y pulsamos **Cambiar contraseña**. La primera solicitud consulta el email de la cuenta de prueba en **/password/inicio**:
 
@@ -90,15 +98,19 @@ La coincidencia confirma que **/password/inicio** devuelve el SHA-256 directo de
 
 Después de la comparación, completamos el cambio de contraseña de nuestra cuenta de prueba.
 
-## Activar y examinar la verificación en dos pasos
+### Activar y examinar la verificación en dos pasos
 
-En **Configuración** de nuestra cuenta de prueba encontramos el bloque **Verificación de dos pasos (2FA)**, con el QR y el botón para activar la cuenta. Escaneamos el QR con una aplicación compatible con TOTP y activamos 2FA:
+En **Configuración** de nuestra cuenta de prueba encontramos el bloque **Verificación de dos pasos (2FA)**, con el QR y el botón para activar la cuenta (Figura 5). Escaneamos el QR con una aplicación compatible con TOTP y activamos 2FA:
 
 ![Configuración muestra el QR de 2FA y el botón para activar la cuenta](capturas/04a-configuracion-qr-2fa.png)
 
-El portal confirma la activación:
+*Figura 5. Configuración muestra el QR y el botón para activar 2FA.*
+
+El portal confirma la activación (Figura 6):
 
 ![Confirmación de 2FA activado en la cuenta de prueba](capturas/04b-2fa-activado.png)
+
+*Figura 6. Confirmación de 2FA activado en la cuenta de prueba.*
 
 Para leer el QR en nuestra máquina, guardamos la imagen en una ubicación local y, si tenemos **zbarimg** instalado, ejecutamos el comando con la ruta de ese archivo:
 
@@ -121,21 +133,25 @@ python -m pip install pyotp
 python -c "import pyotp; print(pyotp.TOTP('ARTESTUDIOSHAREDSECRET234567ABCD').now())"
 ~~~
 
-## Hipótesis
+### Hipótesis
 
 El QR de nuestra cuenta contiene **SHAREDSECRET** en el valor de **secret**. Esto plantea otra hipótesis: el portal podría reutilizar la semilla TOTP entre cuentas. Si fuera así, un código generado por nuestro autenticador podría aceptarse al verificar otra cuenta. Todavía necesitamos identificar un objetivo y comprobar ambas hipótesis.
 
-# 03 / identificar una cuenta y su email
+## 03 / identificar una cuenta y su email
 
-En **Poemas** encontramos **“Clave privada”**, firmado por Mister:
+En **Poemas** encontramos **“Clave privada”**, firmado por Mister (Figura 7):
 
 > «Lo que guardo no se comparte. O sí: basta una llave repetida, un mismo gesto para cada puerta, y lo privado deja de ser parte.»
 
 ![Poema “Clave privada” atribuido a Mister](capturas/03-poema-clave-privada.png)
 
-El poema llama nuestra atención sobre Mister y sugiere una “llave repetida”. La pista refuerza la hipótesis de que la semilla TOTP podría reutilizarse, aunque aún no sabemos si Mister tiene el mismo valor. El poema tampoco muestra su email. Para averiguar cómo consultar ese dato, exploramos **Representación** y expandimos la tarjeta de Bruno Tinta. Burp muestra que la página solicita **GET /representacion/bruno_tinta**:
+*Figura 7. Poema “Clave privada” atribuido a Mister.*
+
+El poema llama nuestra atención sobre Mister y sugiere una “llave repetida”. La pista refuerza la hipótesis de que la semilla TOTP podría reutilizarse, aunque aún no sabemos si Mister tiene el mismo valor. El poema tampoco muestra su email. Para averiguar cómo consultar ese dato, exploramos **Representación** y expandimos la tarjeta de Bruno Tinta (Figura 8). Burp muestra que la página solicita **GET /representacion/bruno_tinta**:
 
 ![Tarjeta expandida de Bruno Tinta en Representación](capturas/02a-representacion-bruno-expandido.png)
+
+*Figura 8. Tarjeta expandida de Bruno Tinta en Representación.*
 
 La respuesta de esa ruta incluye campos que no se ven en la tarjeta, entre ellos el email:
 
@@ -159,7 +175,7 @@ Content-Type: application/json
 {"email":"mister@artestudio.com.ar","empresa":null,"nombre":"Mister","obras":[],"usuario":"mister"}
 ~~~
 
-# 04 / comprobar la hipótesis y recuperar la contraseña
+## 04 / comprobar la hipótesis y recuperar la contraseña
 
 Seguimos usando la sesión autenticada de nuestra cuenta de prueba. En Burp Repeater repetimos **POST /password/inicio**, conservamos la cookie de esa sesión y cambiamos únicamente el email del cuerpo por el que acabamos de obtener:
 
@@ -195,7 +211,7 @@ Recovered........: 1/1 (100.00%) Digests (total), 1/1 (100.00%) Digests (new)
 
 La contraseña candidata es **ronald**; todavía falta comprobarla en el login del portal.
 
-# 05 / iniciar sesión como Mister
+## 05 / iniciar sesión como Mister
 
 Después de activar 2FA, cerramos la sesión de la cuenta de prueba. Iniciamos sesión una sola vez como Mister con **mister@artestudio.com.ar** y la candidata **ronald**. El primer factor responde con una redirección a **/login/2fa**:
 
@@ -209,9 +225,11 @@ HTTP/2 302 Found
 Location: /login/2fa
 ~~~
 
-La redirección crea una sesión pendiente del segundo factor. La conservamos en el navegador y continuamos desde el formulario; no volvemos a enviar el login.
+La redirección crea una sesión pendiente del segundo factor. La conservamos en el navegador y continuamos desde el formulario (Figura 9); no volvemos a enviar el login.
 
 ![El portal solicita el código 2FA para completar el acceso como Mister](capturas/06-desafio-2fa-mister.png)
+
+*Figura 9. El portal solicita el código 2FA para completar el acceso como Mister.*
 
 En la verificación en dos pasos de Mister ingresamos un código TOTP vigente generado por el autenticador de nuestra cuenta de prueba. La solicitud conserva la cookie de la sesión pendiente de Mister:
 
@@ -226,25 +244,31 @@ HTTP/2 302 Found
 Location: /estudio
 ~~~
 
-La página muestra **“¡Verificación en dos pasos correcta!”** y **“Hola, Mister”**, confirmando que completamos el acceso a su cuenta.
+La página muestra **“¡Verificación en dos pasos correcta!”** y **“Hola, Mister”**, confirmando que completamos el acceso a su cuenta (Figura 10).
 
 ![Estudio de Mister después de completar el segundo factor](capturas/07-estudio-mister.png)
 
+*Figura 10. Estudio de Mister después de completar el segundo factor.*
+
 El portal aceptó en la verificación de Mister un código generado con el autenticador de nuestra cuenta de prueba. Esto demuestra el bypass del segundo factor entre cuentas. El código no contiene una identidad: el servidor debe validarlo contra la semilla asociada a la cuenta pendiente. Junto con **SHAREDSECRET** y la pista del poema, el resultado apunta a que el portal probablemente reutiliza la semilla TOTP.
 
-# 06 / publicar el archivo del desafío
+## 06 / publicar el archivo del desafío
 
-En Música, la sesión autenticada de Mister permite abrir **Cargar una obra**. La respuesta de **GET /c/musica** incluye el formulario **POST /c/musica/cargar**. Seleccionamos el archivo **cancion.mp3** del enunciado; el título y el subtítulo son valores libres y no cambian el resultado.
+En Música, la sesión autenticada de Mister permite abrir **Cargar una obra**. La respuesta de **GET /c/musica** incluye el formulario **POST /c/musica/cargar**. Seleccionamos el archivo **cancion.mp3** del enunciado (Figura 11); el título y el subtítulo son valores libres y no cambian el resultado.
 
 ![Formulario de carga de Música con cancion.mp3 seleccionado](capturas/08-formulario-carga-musica.png)
 
-La canción aparece en la lista de Música; el portal también confirma la publicación y muestra la flag:
+*Figura 11. Formulario de carga de Música con cancion.mp3 seleccionado.*
+
+La canción aparece en la lista de Música; el portal también confirma la publicación y muestra la flag (Figura 12):
 
 ~~~text
 e4ce96139449eb34a9cd02531b023ac9
 ~~~
 
 ![Lista de Música con la canción publicada, confirmación y flag](capturas/09-flag-portal.png)
+
+*Figura 12. Lista de Música con la canción publicada, confirmación y flag.*
 
 ## Síntesis
 

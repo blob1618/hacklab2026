@@ -53,7 +53,7 @@ Elegimos el asiento 21. (Figura 4).
 
 ![Mapa de asientos inicial.](capturas/figura-04.png)
 
-*Figura 4. Mapa de asientos inicial.*
+*Figura 4. Mapa de asientos después de escoger el asiento 21.*
 
 En "Reclamos" encontramos un formulario que permite abrir hasta tres casos y los datos de una línea SIP para consultar su estado (Figura 5). Primero comprobamos qué efecto tiene crear un reclamo.
 
@@ -61,9 +61,9 @@ En "Reclamos" encontramos un formulario que permite abrir hasta tres casos y los
 
 *Figura 5. Formulario de reclamos y datos de la línea SIP para consultar su estado.*
 
-Al inspeccionar el formulario de reclamos en DevTools, vemos que el número elegido se envía en un campo llamado "asiento", aunque el selector solo ofrece nuestro 21. Como necesitamos bloquear los otros asientos libres, probamos si el servidor acepta otro número.
+Al inspeccionar el envío del formulario de Reclamos, vemos que el número seleccionado viaja en un campo llamado `asiento`, aunque la interfaz solo ofrece nuestro asiento 21. Para comprobar si el servidor valida ese número, modificamos únicamente el valor de `asiento` antes de enviar la solicitud, conservando la misma sesión. Podemos interceptar la solicitud con Burp y cambiar el valor de 21 a 11, o modificar el formulario con DevTools.
 
-En DevTools cambiamos a 11 el valor enviado en el campo asiento y presentamos un reclamo de tipo "Me equivoqué de asiento". Al volver a la lista aparece un caso para el 11 en estado Pendiente (Figura 6).
+Enviamos un reclamo de tipo «Me equivoqué de asiento» con `asiento` igual a 11. Al volver a la lista aparece un caso para el 11 en estado Pendiente (Figura 6). Esto demuestra que se registró el reclamo para ese asiento; todavía debemos consultar el mapa para saber si quedó bloqueado.
 
 ![Primer reclamo por el asiento 11, todavía en estado pendiente.](capturas/figura-06.png)
 
@@ -115,7 +115,7 @@ Al evaluar los reclamos uno detrás de otro, los anteriores quedan cancelados (F
 
 *Figura 13. Mapa tras la prueba secuencial: sólo el asiento 27 aparece bloqueado.*
 
-¿Qué sucedería si mandamos las tres solicitudes en paralelo en lugar de secuencialmente? Probemos evaluar tres reclamos pendientes en paralelo.
+La prueba secuencial muestra que evaluar un reclamo deja sin efecto los anteriores, pero no vemos el código del servidor que aplica esa regla. Planteamos una hipótesis de condición de carrera: si varias evaluaciones se procesan al mismo tiempo, podrían solaparse antes de que alguna deje sin efecto a las otras. Para comprobar el efecto observable necesitamos tres reclamos pendientes y enviamos sus evaluaciones en paralelo. Después revisaremos la lista y el mapa; que las llamadas se completen no demuestra por sí solo que los asientos queden bloqueados.
 
 Para iniciar las tres evaluaciones juntas usamos el cliente incluido en [scripts/encuentro_obligado_sip.py](scripts/encuentro_obligado_sip.py), que requiere Python 3.10 o posterior:
 

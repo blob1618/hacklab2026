@@ -26,7 +26,15 @@ Al abrir la instancia vemos la página de NeuroLock (Figura 1). Ahí se presenta
 
 ### Preparación local:
 
-Antes de ejecutar el chat comprobamos que tenemos recursos suficientes. Chat.py indica que el modelo base ocupa alrededor de 3,4 GB y recomienda unos 8 GB de RAM libres. Descargamos el adaptador, guardamos el código de chat.py como archivo y colocamos ambos en la misma carpeta. También instalamos las librerías que nos piden.
+Descargamos el adaptador, guardamos el código de `chat.py` como archivo y colocamos ambos en la misma carpeta.
+
+Para ejecutar el chat local necesitamos Python 3 y las bibliotecas `torch`, `transformers` y `safetensors`, indicadas en la cabecera de [`scripts/chat.py`](scripts/chat.py). En el mismo entorno de Python desde el que ejecutaremos el chat, las instalamos con:
+
+```bash
+python -m pip install torch transformers safetensors
+```
+
+Antes de continuar comprobamos que disponemos del espacio para descargar el modelo base y de aproximadamente 8 GB de RAM libres, como advierte `chat.py`. El modelo base ocupa alrededor de 3,4 GB.
 
 Con el entorno preparado, ejecutamos python chat.py. La primera vez se descarga el modelo base; esperamos hasta que aparezca el indicador vos > (Figura 2) para empezar a preguntar.
 
